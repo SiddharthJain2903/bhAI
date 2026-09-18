@@ -3,7 +3,7 @@ from flask_login import login_required, current_user
 
 from models import db, Chat, Message
 from llm import get_bot_response
-from tools import extract_urls, fetch_page_text, detect_image_request, build_image_url, IMAGE_MARKER
+from tools import extract_urls, fetch_page_text, detect_image_request, build_image_url, IMAGE_MARKER, IMAGE_PLACEHOLDER_FOR_LLM
 
 chat_bp = Blueprint("chat", __name__)
 
@@ -71,7 +71,14 @@ def send_message(chat_id):
         return jsonify({"type": "image", "image_url": image_url, "chat_title": chat.title})
 
     # ---- Normal text path (with optional link reading) ----
-    history = [{"role": m.role, "content": m.content} for m in chat.messages]
+    # Never send the raw "[bhai-image]<url>" marker to the LLM — otherwise it
+    # starts imitating that literal text instead of writing a normal reply.
+    history = []
+    for m in chat.messages:
+        content = m.content
+        if m.role == "assistant" and content.startswith(IMAGE_MARKER):
+            content = IMAGE_PLACEHOLDER_FOR_LLM
+        history.append({"role": m.role, "content": content})
 
     urls = extract_urls(user_text)
     if urls:

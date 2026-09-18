@@ -10,14 +10,17 @@ URL_REGEX = re.compile(r'https?://[^\s<>"\']+')
 # Explicit command: "/image a cat riding a bicycle"
 IMAGE_COMMAND_REGEX = re.compile(r'^/image\s+(.+)', re.IGNORECASE)
 
-# Loose natural-language fallback: "generate an image of a sunset", "draw me a dragon"
+# Loose natural-language fallback: "generate an image of a sunset", "draw me a dragon",
+# "give me an image saying hi", "send a picture of a dog"
 IMAGE_NATURAL_REGEX = re.compile(
-    r'\b(generate|create|draw|make|design)\b[^.]{0,20}\b(image|picture|photo|drawing|art|illustration)\b'
-    r'(?:\s+of|\s+showing|\s+depicting)?\s*(.*)',
+    r'\b(generate|create|draw|make|design|give|show|send|produce|paint|sketch|need)\b'
+    r'[^.]{0,25}\b(image|picture|photo|photograph|drawing|painting|artwork|illustration|poster|wallpaper|sketch)\b'
+    r'(?:\s+(?:of|showing|depicting|saying|that says|with|for))?\s*(.*)',
     re.IGNORECASE,
 )
 
 IMAGE_MARKER = "[bhai-image]"
+IMAGE_PLACEHOLDER_FOR_LLM = "(I generated an image here for the user.)"
 
 
 def extract_urls(text):
@@ -64,11 +67,16 @@ def detect_image_request(text):
 
     m = IMAGE_COMMAND_REGEX.match(text)
     if m:
-        return m.group(1).strip()
+        return m.group(1).strip().strip('"\'')
 
     m2 = IMAGE_NATURAL_REGEX.search(text)
-    if m2 and m2.group(3).strip():
-        return m2.group(3).strip()
+    if m2:
+        prompt = m2.group(3).strip().strip('"\'')
+        if prompt:
+            return prompt
+        # Trigger words matched but nothing followed (e.g. "make me an image") —
+        # fall back to the whole message minus the trigger phrase itself.
+        return text
 
     return None
 
