@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Sign up · bhAI{% endblock %}
+{% block content %}
+<div class="auth-page">
+    <div class="auth-card">
+        <div class="auth-logo">
+            <span class="logo-mark">bh<span class="accent">AI</span></span>
+            <p class="logo-tagline">आपका अपना personal AI</p>
+        </div>
+
+        <h1>Create your account</h1>
+        <p class="auth-sub">It's free — takes less than a minute.</p>
+
+        <form method="POST" class="auth-form">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" placeholder="e.g. rohit_99" required autofocus>
+
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" placeholder="you@example.com" required>
+
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" placeholder="At least 6 characters" required>
+
+            <label for="confirm_password">Confirm Password</label>
+            <input type="password" id="confirm_password" name="confirm_password" placeholder="Re-enter password" required>
+
+            <button type="submit" class="btn-primary">Create Account</button>
+        </form>
+
+        <p class="auth-switch">Already have an account? <a href="{{ url_for('auth.login') }}">Log in</a></p>
+    </div>
+</div>
+{% endblock %}

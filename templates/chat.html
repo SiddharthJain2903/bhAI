@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}bhAI{% endblock %}
+{% block content %}
+<div class="app-shell">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <span class="logo-mark small">bh<span class="accent">AI</span></span>
+        </div>
+
+        <button id="newChatBtn" class="new-chat-btn">
+            <span>+</span> New Chat
+        </button>
+
+        <div class="chat-history" id="chatHistory">
+            {% for c in chats %}
+            <a href="{{ url_for('chat.view_chat', chat_id=c.id) }}"
+               class="chat-history-item {% if active_chat and c.id == active_chat.id %}active{% endif %}"
+               data-chat-id="{{ c.id }}">
+                <span class="chat-item-title">{{ c.title }}</span>
+                <button class="delete-chat-btn" data-chat-id="{{ c.id }}" title="Delete chat">✕</button>
+            </a>
+            {% else %}
+            <p class="empty-history">No chats yet. Start one!</p>
+            {% endfor %}
+        </div>
+
+        <div class="sidebar-footer">
+            <div class="user-pill">
+                <span class="user-avatar">{{ current_user.username[0]|upper }}</span>
+                <span class="user-name">{{ current_user.username }}</span>
+            </div>
+            <a href="{{ url_for('auth.logout') }}" class="logout-link" title="Log out">⏻</a>
+        </div>
+    </aside>
+
+    <main class="chat-main">
+        {% if active_chat %}
+        <div class="chat-window" id="chatWindow" data-chat-id="{{ active_chat.id }}">
+            <div class="messages" id="messagesContainer">
+                {% for m in active_chat.messages %}
+                <div class="message {{ m.role }}">
+                    {% if m.content.startswith('[bhai-image]') %}
+                    <div class="bubble image-bubble">
+                        <img src="{{ m.content.replace('[bhai-image]', '') }}" alt="Generated image" class="chat-image">
+                    </div>
+                    {% else %}
+                    <div class="bubble">{{ m.content }}</div>
+                    {% endif %}
+                </div>
+                {% else %}
+                <div class="welcome-screen">
+                    <span class="logo-mark big">bh<span class="accent">AI</span></span>
+                    <p>Kya haal hai! Ask me anything to get started.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% else %}
+        <div class="welcome-screen" id="welcomeScreen">
+            <span class="logo-mark big">bh<span class="accent">AI</span></span>
+            <p>Your personal AI, ready when you are.</p>
+            <button id="startChatBtn" class="btn-primary">Start a new chat</button>
+        </div>
+        {% endif %}
+
+        <form id="messageForm" class="message-form" {% if not active_chat %}style="display:none"{% endif %}>
+            <input type="text" id="messageInput" placeholder="Message bhAI..." autocomplete="off">
+            <button type="submit" id="sendBtn">➤</button>
+        </form>
+    </main>
+</div>
+{% endblock %}
