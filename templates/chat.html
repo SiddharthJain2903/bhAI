@@ -29,11 +29,13 @@
                 <span class="user-avatar">{{ current_user.username[0]|upper }}</span>
                 <span class="user-name">{{ current_user.username }}</span>
             </div>
-            <a href="{{ url_for('auth.logout') }}" class="logout-link" title="Log out">⏻</a>
+            <a href="{{ url_for('auth.logout') }}" class="logout-btn">
+                <span class="logout-icon">⏻</span> Logout
+            </a>
         </div>
     </aside>
 
-    <main class="chat-main">
+    <main class="chat-main motif-lattice">
         {% if active_chat %}
         <div class="chat-window" id="chatWindow" data-chat-id="{{ active_chat.id }}">
             <div class="messages" id="messagesContainer">
@@ -43,12 +45,29 @@
                     <div class="bubble image-bubble">
                         <img src="{{ m.content.replace('[bhai-image]', '') }}" alt="Generated image" class="chat-image">
                     </div>
+                    {% elif m.attachment_path and m.attachment_kind == 'image' %}
+                    <div class="bubble image-bubble">
+                        <img src="{{ url_for('chat.download_attachment', message_id=m.id) }}" alt="{{ m.attachment_name }}" class="chat-image">
+                        {% if not m.content.startswith('(uploaded ') %}<div class="attachment-caption">{{ m.content }}</div>{% endif %}
+                    </div>
+                    {% elif m.attachment_path %}
+                    <div class="bubble">
+                        <a class="file-chip" href="{{ url_for('chat.download_attachment', message_id=m.id) }}" target="_blank" rel="noopener">
+                            <span class="file-chip-icon">{% if m.attachment_kind == 'pdf' %}📄{% elif m.attachment_kind == 'docx' %}📝{% else %}📃{% endif %}</span>
+                            <span class="file-chip-name">{{ m.attachment_name }}</span>
+                        </a>
+                        {% if not m.content.startswith('(uploaded ') %}<div class="attachment-caption">{{ m.content }}</div>{% endif %}
+                    </div>
+                    {% elif m.role == 'assistant' %}
+                    <div class="bubble md">{{ m.content|markdown }}</div>
                     {% else %}
                     <div class="bubble">{{ m.content }}</div>
                     {% endif %}
                 </div>
                 {% else %}
                 <div class="welcome-screen">
+                    <div class="motif-paisley"></div>
+                    {% include "_diya.html" %}
                     <span class="logo-mark big">bh<span class="accent">AI</span></span>
                     <p>Kya haal hai! Ask me anything to get started.</p>
                 </div>
@@ -57,13 +76,18 @@
         </div>
         {% else %}
         <div class="welcome-screen" id="welcomeScreen">
+            <div class="motif-paisley"></div>
+            {% with size=44 %}{% include "_diya.html" %}{% endwith %}
             <span class="logo-mark big">bh<span class="accent">AI</span></span>
             <p>Your personal AI, ready when you are.</p>
             <button id="startChatBtn" class="btn-primary">Start a new chat</button>
         </div>
         {% endif %}
 
+        <div id="pendingAttachment" class="pending-attachment" style="display:none"></div>
         <form id="messageForm" class="message-form" {% if not active_chat %}style="display:none"{% endif %}>
+            <input type="file" id="fileInput" accept=".png,.jpg,.jpeg,.webp,.gif,.pdf,.docx,.txt,.md,.csv,.json" hidden>
+            <button type="button" id="attachBtn" title="Attach a file (image, PDF, Word, text)">📎</button>
             <input type="text" id="messageInput" placeholder="Message bhAI..." autocomplete="off">
             <button type="submit" id="sendBtn">➤</button>
         </form>
